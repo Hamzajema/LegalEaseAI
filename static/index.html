@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tunisia Legal Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1D3557;
+            --accent: #D9A21B;
+            --light: #FFEECB;
+            --secondary: #877455;
+            --success: #27ae60;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--light) 0%, #fff 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+           
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(29, 53, 87, 0.3);
+            display: flex; /* Added for badge alignment */
+            justify-content: space-between; /* Added for badge alignment */
+            align-items: center; /* Added for badge alignment */
+        }
+
+        .header-content { /* New div to wrap title/subtitle */
+            flex-grow: 1;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        @media (min-width: 768px) {
+            .main-content {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .chat-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--light);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            padding: 15px 20px;
+            border-radius: 20px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-bubble {
+            background: var(--accent);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.assistant .message-bubble {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-label {
+            font-size: 0.85em;
+            color: var(--secondary);
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .pdf-download {
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--success);
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .pdf-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .pdf-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+            font-size: 0.85em;
+        }
+
+        .sources {
+            margin-top: 15px;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 10px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        #questionInput {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid var(--primary);
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        #questionInput:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(217, 162, 27, 0.1);
+        }
+
+        .btn {
+            padding: 15px 35px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #c59319;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: var(--secondary);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid var(--light);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-title {
+            color: var(--primary);
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .example-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: var(--light);
+            border: 2px solid var(--primary);
+            border-radius: 10px;
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95em;
+            text-align: left;
+        }
+
+        .example-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            background: var(--accent);
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 10px;
+        }
+        
+        /* --- Modal Styles --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.open .modal {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .modal-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .modal-title {
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .modal-subtitle {
+            color: var(--secondary);
+            font-size: 1em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            font-size: 1em;
+            min-height: 100px;
+            resize: vertical;
+            outline: none;
+        }
+
+        .form-hint {
+            font-size: 0.85em;
+            color: var(--secondary);
+            margin-top: 10px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-modal {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            border: none;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #c59319;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: var(--primary);
+            border: 1px solid var(--secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        /* Idea Badge in Header */
+        .idea-badge-container {
+            margin-left: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .idea-badge-container:hover {
+            opacity: 0.8;
+        }
+
+        .idea-icon {
+            font-size: 1.5em;
+            line-height: 1;
+        }
+
+        .idea-text {
+            font-size: 0.7em;
+            font-weight: 600;
+            color: var(--accent);
+            display: block;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+
+            <div class="header-content">
+                <div style="display: flex;">
+                    <img width="130px"  src="/static/lg.png">
+                    <div>
+                        <h1>Tunisia Legal Assistant</h1>
+                        <p>Ask legal questions OR request to fill forms - I'll understand and help automatically</p>
+                    </div>
+
+                </div>
+            </div>
+            <div class="idea-badge-container" id="ideaBadgeContainer" onclick="showIdeaModal()">
+                <div class="idea-icon">💡</div>
+                <span class="idea-text" id="ideaBadgeText">Set Idea</span>
+            </div>
+            </div>
+
+        <div class="main-content">
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🤖</div>
+                        <h3>Intelligent Legal Assistant</h3>
+                        <p>Just tell me what you need in natural language!</p>
+                        <p style="margin-top: 10px; font-size: 0.9em;">
+                            Ask questions like "What is the Startup Act?" <br>
+                            OR request forms like "I want to register a SARL company named TechStart with 50000 DT capital"
+                        </p>
+                    </div>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p style="color: var(--secondary);">Analyzing your request...</p>
+                </div>
+
+                <div class="input-area">
+                    <input 
+                        type="text" 
+                        id="questionInput" 
+                        placeholder="Ask a question or request a form to fill..."
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button class="btn" id="askButton" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3 class="info-title">Examples</h3>
+
+                <h4 style="color: var(--primary); margin: 15px 0 10px;">Legal Questions:</h4>
+                <button class="example-btn" onclick="setQuestion('What is the Startup Act in Tunisia?')">
+                    What is the Startup Act?
+                </button>
+                <button class="example-btn" onclick="setQuestion('How to register a company in Tunisia?')">
+                    Company registration process?
+                </button>
+
+                <h4 style="color: var(--primary); margin: 20px 0 10px;">Form Requests:</h4>
+                <button class="example-btn" onclick="setQuestion('I want to create a SARL my company ')">
+                    Register SARL company
+                </button>
+                <button class="example-btn" onclick="setQuestion('Fill SUARL registration form for my company ')">
+                    Register SUARL company
+                </button>
+                <button class="example-btn" onclick="setQuestion('I need statuts for my SARL my company ')">
+                    Create SARL statuts
+                </button>
+
+                <div style="margin-top: 30px; padding: 15px; background: var(--light); border-radius: 10px;">
+                    <h4 style="color: var(--primary); margin-bottom: 10px;">How it works:</h4>
+                    <ol style="color: var(--secondary); font-size: 0.9em; padding-left: 20px;">
+                        <li style="margin: 5px 0;">Describe your need in your own words</li>
+                        <li style="margin: 5px 0;">AI detects if you need a form</li>
+                        <li style="margin: 5px 0;">AI selects the right PDF automatically</li>
+                        <li style="margin: 5px 0;">AI extracts info from your message</li>
+                        <li style="margin: 5px 0;">Get your filled PDF instantly!</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="ideaModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-icon">💡</div>
+                <h2 class="modal-title">Welcome!</h2>
+                <p class="modal-subtitle">Tell us about your business idea or project</p>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label" for="userIdea">What's your idea?</label>
+                    <textarea 
+                        class="form-input" 
+                        id="userIdeaInput" 
+                        placeholder="E.g., I want to start a tech company that develops mobile apps for restaurants..."
+                    ></textarea>
+                    <p class="form-hint">
+                        This helps us provide better legal guidance tailored to your specific needs. 
+                        You can change this later by clicking the idea badge in the header.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-modal btn-secondary" onclick="skipIdea()">Skip for now</button>
+                <button class="btn-modal btn-primary" onclick="saveIdea()">Save & Continue</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_BASE_URL = 'http://10.116.120.206:5000';
+        const IDEA_STORAGE_KEY = 'legal_assistant_user_idea'; // Key for Local Storage
+        let sessionId = 'session_' + Date.now();
+        let userIdea = ''; // Variable to hold the user's idea
+
+        // --- Idea Modal Functions ---
+
+        function showIdeaModal() {
+            const modal = document.getElementById('ideaModal');
+            const ideaInput = document.getElementById('userIdeaInput');
+            // Load current idea into the input field
+            ideaInput.value = userIdea; 
+            modal.classList.add('open');
+            ideaInput.focus();
+        }
+
+        function hideIdeaModal() {
+            document.getElementById('ideaModal').classList.remove('open');
+        }
+
+        function loadIdea() {
+            // Load idea from Local Storage
+            const savedIdea = localStorage.getItem(IDEA_STORAGE_KEY);
+            if (savedIdea) {
+                userIdea = savedIdea;
+            }
+            updateIdeaDisplay();
+            // Return true if an idea was found, false otherwise
+            return !!savedIdea; 
+        }
+
+        function saveIdea() {
+            const ideaInput = document.getElementById('userIdeaInput');
+            const idea = ideaInput.value.trim();
+            
+            userIdea = idea;
+            // Save to Local Storage
+            localStorage.setItem(IDEA_STORAGE_KEY, idea); 
+            updateIdeaDisplay();
+            hideIdeaModal();
+        }
+
+        function skipIdea() {
+            // Treat skipping as saving an empty idea to avoid showing the modal again
+            userIdea = '';
+            localStorage.setItem(IDEA_STORAGE_KEY, '');
+            updateIdeaDisplay();
+            hideIdeaModal();
+        }
+
+        function updateIdeaDisplay() {
+            const ideaTextElement = document.getElementById('ideaBadgeText');
+            // Display a shortened version of the idea or a default message
+            if (userIdea) {
+                const shortIdea = userIdea.length > 15 ? userIdea.substring(0, 15) + '...' : userIdea;
+                ideaTextElement.innerText = shortIdea;
+                ideaTextElement.style.color = 'white'; // Make it more prominent
+            } else {
+                ideaTextElement.innerText = 'Set Idea';
+                ideaTextElement.style.color = 'var(--accent)';
+            }
+        }
+
+        // --- Chat Functions ---
+
+        function setQuestion(question) {
+            document.getElementById('questionInput').value = question;
+            document.getElementById('questionInput').focus();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('questionInput');
+            console.log(userIdea);
+            
+            const question = input.value.trim();
+             
+
+            if (!question) {
+                alert('Please enter a message');
+                return;
+            }
+
+            const chatMessages = document.getElementById('chatMessages');
+            const loading = document.getElementById('loading');
+            const askButton = document.getElementById('askButton');
+
+            const emptyState = chatMessages.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            addMessage('user', question);
+            input.value = '';
+            askButton.disabled = true;
+            loading.classList.add('active');
+
+            // Get the current idea to send with the message
+            const currentIdea = userIdea || 'No project idea provided.';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/ask`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question: question+userIdea,
+                        session_id: sessionId,
+                        language: 'en',
+                        top_k: 3,
+                        use_llm: true,
+                        // NEW: Include the user idea in the request body
+                        user_idea: currentIdea 
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.type === 'pdf_generated') {
+                    addPDFMessage(data);
+                } else {
+                    addMessage('assistant', data.answer, data.sources, data.confidence);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('assistant', 
+                    `Error: Could not connect to the server. Make sure the backend is running on ${API_BASE_URL}`, 
+                    [], 0
+                );
+            } finally {
+                loading.classList.remove('active');
+                askButton.disabled = false;
+                input.focus();
+            }
+        }
+
+        function addMessage(sender, text, sources = [], confidence = 0, attempts = 1, validation_feedback = '', hasWarning = false) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            let sourcesHtml = '';
+            if (sources && sources.length > 0) {
+                sourcesHtml = `
+                    <div class="sources">
+                        <div style="font-weight: 600; color: var(--primary); margin-bottom: 10px; font-size: 0.9em;">Sources:</div>
+                        ${sources.map(source => `
+                            <div style="padding: 8px; margin: 5px 0; background: white; border-radius: 5px; font-size: 0.85em; color: var(--secondary);">
+                                ${source.source} - Page ${source.page}
+                                <span class="badge">${(source.similarity * 100).toFixed(0)}%</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            const confidenceBadge = confidence > 0 
+                ? `<span class="badge">Confidence: ${(confidence * 100).toFixed(0)}%</span>` 
+                : '';
+
+            const attemptsBadge = attempts > 1
+                ? `<span class="badge" style="background: #3498db;">Validated (${attempts} attempts)</span>`
+                : '';
+
+            const warningBadge = hasWarning
+                ? `<span class="badge" style="background: #e74c3c;">⚠ Quality Warning</span>`
+                : '';
+
+            const validationInfo = validation_feedback && attempts > 1
+                ? `
+                    <div style="margin-top: 10px; padding: 10px; background: rgba(52, 152, 219, 0.1); border-radius: 5px; font-size: 0.85em;">
+                        <strong>Quality Check:</strong> ${validation_feedback}
+                    </div>
+                `
+                : '';
+
+            messageDiv.innerHTML = `
+                <div class="message-label">${sender === 'user' ? 'You' : 'Assistant'}</div>
+                <div class="message-bubble">
+                    ${text}
+                    ${confidenceBadge}
+                    ${attemptsBadge}
+                    ${warningBadge}
+                </div>
+                ${validationInfo}
+                ${sourcesHtml}
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addPDFMessage(data) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message assistant';
+
+            const filledFieldsList = data.filled_fields && data.filled_fields.length > 0
+                ? `
+                    <div class="pdf-info">
+                        <strong>Filled fields (${data.filled_fields.length}):</strong><br>
+                        ${data.filled_fields.slice(0, 5).map(f => `• ${f.field_name}: ${f.value}`).join('<br>')}
+                        ${data.filled_fields.length > 5 ? '<br>...and more' : ''}
+                    </div>
+                `
+                : '';
+
+            const missingFieldsWarning = data.missing_fields && data.missing_fields.length > 0
+                ? `
+                    <div class="pdf-info" style="background: rgba(255, 193, 7, 0.2);">
+                        <strong>Missing information:</strong><br>
+                        ${data.missing_fields.join(', ')}
+                    </div>
+                `
+                : '';
+
+            messageDiv.innerHTML = `
+                <div class="message-label">Assistant</div>
+                <div class="message-bubble">
+                    ${data.answer}
+                    <span class="badge">PDF Ready</span>
+                </div>
+                ${filledFieldsList}
+                ${missingFieldsWarning}
+                <div class="pdf-download" onclick="downloadPDF('${data.pdf_data}', '${data.pdf_filename}')">
+                    <span style="font-size: 1.5em;">📄</span>
+                    <div>
+                        <strong>Download: ${data.pdf_filename}</strong><br>
+                        <small>Click to download your filled form</small>
+                    </div>
+                </div>
+            `;
+
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function downloadPDF(base64Data, filename) {
+            try {
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: 'application/pdf' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `filled_${filename}`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Error downloading PDF. Please try again.');
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            // 1. Load the idea from Local Storage
+            const ideaLoaded = loadIdea();
+
+            // 2. If no idea is loaded, show the modal
+            if (!ideaLoaded) {
+                showIdeaModal();
+            }
+
+            // 3. Check backend connection
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    console.log('Backend connected successfully');
+                    const data = await response.json();
+                    console.log('System status:', data);
+                } else {
+                    console.warn('Backend not responding properly');
+                }
+            } catch (error) {
+                console.warn('Backend not connected. Make sure Flask server is running.');
+                addMessage('assistant', 
+                    'Warning: Could not connect to backend server. Please start the Flask server first.', 
+                    [], 0
+                );
+            }
+        });
+    </script>
+</body>
+</html>
